@@ -198,11 +198,16 @@ per album at the database level (FR-05).
 | GET | `/api/albums/:id` | protect | MAR-15 |
 | GET | `/api/albums/:id/reviews` | protect | MAR-15 |
 | POST | `/api/admin/albums` | protect + requireRole('admin') | MAR-10 |
+| GET | `/api/admin/albums/:id` | protect + requireRole('admin') | MAR-11 |
 | PUT | `/api/admin/albums/:id` | protect + requireRole('admin') | MAR-11 |
 | DELETE | `/api/admin/albums/:id` | protect + requireRole('admin') | MAR-12 |
 | POST | `/api/reviews` | protect + requireRole('user') | MAR-16 |
 | PUT | `/api/reviews/:id` | protect + requireOwnership | MAR-17 |
 | DELETE | `/api/reviews/:id` | protect + requireOwnership | MAR-18 |
+
+`GET /api/admin/albums/:id` exists to serve the edit form's pre-fill and is
+distinct from `GET /api/albums/:id` (MAR-15): the admin route requires the
+`admin` role, while the MAR-15 route is available to any authenticated user.
 
 Album responses include a computed `averageRating` (one decimal) and
 `reviewCount`. When `reviewCount` is 0, `averageRating` is `null` so the client

@@ -89,6 +89,7 @@ const updateAlbum = async (req, res) => {
     }
 };
 
+
 const deleteAlbum = async (req, res) => {
     try {
         const album = await Album.findById(req.params.id);
