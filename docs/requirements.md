@@ -79,7 +79,7 @@ The task feature is replaced entirely, not kept alongside. Delete:
 | JWT expiry | `30d` | `60m` | NFR-01 |
 | JWT payload | `{ id }` | `{ id, role }` | role check without extra DB read |
 | Duplicate email | `400` | `409` | acceptance criteria |
-| Backend port | `5001` | `5000` | matches design document |
+| Backend port | `5001` | matches design document |
 | Logout | absent | `POST /api/auth/logout` | MAR-9 |
 | Middleware | `protect` only | + `requireRole`, `requireOwnership` | FR-10 |
 
@@ -427,7 +427,7 @@ Complete the TODO: deleting an album removes all reviews referencing it
 
 **Tasks**
 - EC2 t2.micro, security group open on 22 and 80 only.
-- Node.js 20, pm2, nginx reverse-proxying port 80 to the app on 5000.
+- Node.js 20, pm2, nginx reverse-proxying port 80 to the app on 5001.
 - MongoDB Atlas network access configured for the instance.
 - `pm2 startup` + `pm2 save` so it survives reboot.
 - README with setup, architecture summary, known limitations and deployment URL.
