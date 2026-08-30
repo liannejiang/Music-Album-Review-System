@@ -1,3 +1,4 @@
+// TODO(MAR-15): make this open the album detail page once it exists
 const AlbumCard = ({ album }) => (
   <div className="bg-white shadow-md rounded overflow-hidden">
     <div className="aspect-square bg-gray-100 flex items-center justify-center">
