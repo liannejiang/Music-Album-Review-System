@@ -6,5 +6,5 @@ A web application allowing members to browse albums and submit ratings/reviews,
 with admin moderation. Built with React, Node.js/Express, and MongoDB Atlas.
 
 ### Roles
-- Admin: manage album catalogue, moderate reviews
-- Member: browse albums, submit and manage own reviews
+- Admin: manage the album catalogue (create, update, delete albums)
+- User: browse and search albums, submit and manage their own reviews
