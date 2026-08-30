@@ -41,4 +41,52 @@ const createAlbum = async (req, res) => {
     }
 };
 
-module.exports = { createAlbum };
+const getAlbum = async (req, res) => {
+    try {
+        const album = await Album.findById(req.params.id);
+        if (!album) {
+            return res.status(404).json({ message: 'Album not found' });
+        }
+        res.status(200).json(album);
+    } catch (error) {
+        if (error.name === 'CastError') {
+            return res.status(404).json({ message: 'Album not found' });
+        }
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const updateAlbum = async (req, res) => {
+    const { title, artistName, releaseYear, coverImageUrl, tracks } = req.body;
+
+    const validationError = validateAlbumInput({ title, artistName, tracks });
+    if (validationError) {
+        return res.status(400).json({ message: validationError });
+    }
+
+    try {
+        const album = await Album.findById(req.params.id);
+        if (!album) {
+            return res.status(404).json({ message: 'Album not found' });
+        }
+
+        album.title = title;
+        album.artistName = artistName;
+        album.releaseYear = releaseYear;
+        album.coverImageUrl = coverImageUrl;
+        album.tracks = tracks;
+
+        const updatedAlbum = await album.save();
+        res.status(200).json(updatedAlbum);
+    } catch (error) {
+        if (error.name === 'CastError') {
+            return res.status(404).json({ message: 'Album not found' });
+        }
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ message: error.message });
+        }
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { createAlbum, getAlbum, updateAlbum };

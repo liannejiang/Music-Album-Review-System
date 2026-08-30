@@ -51,6 +51,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route element={<RequireAdmin />}>
             <Route path="/admin/albums/new" element={<AlbumForm />} />
+            <Route path="/admin/albums/:id/edit" element={<AlbumForm />} />
           </Route>
         </Route>
         <Route element={<RedirectIfAuthenticated />}>

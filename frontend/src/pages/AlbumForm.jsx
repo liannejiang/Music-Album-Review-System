@@ -1,10 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
 
 const emptyTrack = { trackNumber: '', title: '', durationSec: '' };
 
+const toTrackFields = (tracks) =>
+  tracks.map((track) => ({
+    trackNumber: String(track.trackNumber ?? ''),
+    title: track.title ?? '',
+    durationSec: track.durationSec !== undefined && track.durationSec !== null ? String(track.durationSec) : '',
+  }));
+
 const AlbumForm = () => {
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
+
   const [formData, setFormData] = useState({
     title: '',
     artistName: '',
@@ -14,7 +25,36 @@ const AlbumForm = () => {
   const [tracks, setTracks] = useState([{ ...emptyTrack }]);
   const [status, setStatus] = useState('idle'); // idle | error | success
   const [message, setMessage] = useState('');
+  const [initialLoading, setInitialLoading] = useState(isEditMode);
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const loadAlbum = async () => {
+      try {
+        const response = await axiosInstance.get(`/api/admin/albums/${id}`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        const album = response.data;
+        setFormData({
+          title: album.title || '',
+          artistName: album.artistName || '',
+          releaseYear: album.releaseYear !== undefined && album.releaseYear !== null ? String(album.releaseYear) : '',
+          coverImageUrl: album.coverImageUrl || '',
+        });
+        setTracks(album.tracks && album.tracks.length ? toTrackFields(album.tracks) : [{ ...emptyTrack }]);
+      } catch (error) {
+        setStatus('error');
+        setMessage(error.response?.data?.message || 'Failed to load album.');
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    loadAlbum();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const validate = () => {
     if (!formData.title.trim()) return 'Album title is required.';
@@ -55,34 +95,52 @@ const AlbumForm = () => {
       return;
     }
 
+    const payload = {
+      title: formData.title,
+      artistName: formData.artistName,
+      releaseYear: formData.releaseYear ? Number(formData.releaseYear) : undefined,
+      coverImageUrl: formData.coverImageUrl || undefined,
+      tracks: tracks.map((track) => ({
+        trackNumber: Number(track.trackNumber),
+        title: track.title,
+        durationSec: track.durationSec ? Number(track.durationSec) : undefined,
+      })),
+    };
+    const authHeader = { headers: { Authorization: `Bearer ${user.token}` } };
+
     try {
-      await axiosInstance.post(
-        '/api/admin/albums',
-        {
-          title: formData.title,
-          artistName: formData.artistName,
-          releaseYear: formData.releaseYear ? Number(formData.releaseYear) : undefined,
-          coverImageUrl: formData.coverImageUrl || undefined,
-          tracks: tracks.map((track) => ({
-            trackNumber: Number(track.trackNumber),
-            title: track.title,
-            durationSec: track.durationSec ? Number(track.durationSec) : undefined,
-          })),
-        },
-        { headers: { Authorization: `Bearer ${user.token}` } }
-      );
-      setStatus('success');
-      setMessage('Album created successfully.');
+      if (isEditMode) {
+        await axiosInstance.put(`/api/admin/albums/${id}`, payload, authHeader);
+        setStatus('success');
+        setMessage('Album updated successfully.');
+      } else {
+        await axiosInstance.post('/api/admin/albums', payload, authHeader);
+        setStatus('success');
+        setMessage('Album created successfully.');
+      }
     } catch (error) {
       setStatus('error');
-      setMessage(error.response?.data?.message || 'Failed to create album. Please try again.');
+      setMessage(
+        error.response?.data?.message ||
+          (isEditMode ? 'Failed to update album. Please try again.' : 'Failed to create album. Please try again.')
+      );
     }
   };
+
+  if (initialLoading) {
+    return (
+      <div className="max-w-2xl mx-auto mt-20 mb-20">
+        <p className="text-center text-gray-500">Loading album...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto mt-20 mb-20">
       <form onSubmit={handleSubmit} className="bg-white p-6 shadow-md rounded">
-        <h1 className="text-2xl font-bold mb-4 text-center">Create Album</h1>
+        <h1 className="text-2xl font-bold mb-4 text-center">
+          {isEditMode ? 'Edit Album' : 'Create Album'}
+        </h1>
 
         {status === 'error' && (
           <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
@@ -179,7 +237,7 @@ const AlbumForm = () => {
           disabled={status === 'success'}
           className="w-full bg-green-600 text-white p-2 rounded disabled:opacity-50"
         >
-          Create Album
+          {isEditMode ? 'Save Changes' : 'Create Album'}
         </button>
       </form>
     </div>
