@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ProtectedRoute from './components/ProtectedRoute';
+import RedirectIfAuthenticated from './components/RedirectIfAuthenticated';
 import { useAuth } from './context/AuthContext';
 import axiosInstance from './axiosConfig';
 
@@ -47,7 +48,9 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Home />} />
         </Route>
-        <Route path="/login" element={<Login />} />
+        <Route element={<RedirectIfAuthenticated />}>
+          <Route path="/login" element={<Login />} />
+        </Route>
         <Route path="/register" element={<Register />} />
       </Routes>
     </BrowserRouter>
