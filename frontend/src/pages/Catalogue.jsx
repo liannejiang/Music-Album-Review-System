@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
 import AlbumCard from '../components/AlbumCard';
 import EmptyState from '../components/EmptyState';
+import SearchBar from '../components/SearchBar';
 
 const Catalogue = () => {
   const [status, setStatus] = useState('loading'); // loading | error | loaded
@@ -10,6 +11,7 @@ const Catalogue = () => {
   const [albums, setAlbums] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [query, setQuery] = useState('');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -17,7 +19,7 @@ const Catalogue = () => {
       setStatus('loading');
       try {
         const response = await axiosInstance.get('/api/albums', {
-          params: { page },
+          params: { page, q: query || undefined },
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setAlbums(response.data.albums);
@@ -30,11 +32,18 @@ const Catalogue = () => {
     };
 
     loadAlbums();
-  }, [page, user.token]);
+  }, [page, query, user.token]);
+
+  const handleSearch = (term) => {
+    setPage(1);
+    setQuery(term);
+  };
 
   return (
     <div className="max-w-6xl mx-auto mt-10 mb-20 px-4">
       <h1 className="text-2xl font-bold mb-6">Catalogue</h1>
+
+      <SearchBar onSearch={handleSearch} initialValue={query} />
 
       {status === 'loading' && <p className="text-center text-gray-500">Loading albums...</p>}
 
@@ -45,7 +54,13 @@ const Catalogue = () => {
       )}
 
       {status === 'loaded' && albums.length === 0 && (
-        <EmptyState message="No albums yet. Check back soon." />
+        <EmptyState
+          message={
+            query
+              ? `No albums match "${query}".`
+              : 'No albums yet. Check back soon.'
+          }
+        />
       )}
 
       {status === 'loaded' && albums.length > 0 && (

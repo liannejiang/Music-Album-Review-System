@@ -3,6 +3,8 @@ const Album = require('../models/Album');
 
 const PAGE_SIZE = 12;
 
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const validateAlbumInput = ({ title, artistName, tracks }) => {
     if (!title || typeof title !== 'string' || !title.trim()) {
         return 'Album title is required';
@@ -127,8 +129,22 @@ const deleteAlbum = async (req, res) => {
 const listAlbums = async (req, res) => {
     try {
         const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-        const totalCount = await Album.countDocuments();
-        const albums = await Album.find()
+        const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+
+        let filter = {};
+        if (q) {
+            const pattern = new RegExp(escapeRegex(q), 'i');
+            filter = {
+                $or: [
+                    { title: pattern },
+                    { artistName: pattern },
+                    { 'tracks.title': pattern },
+                ],
+            };
+        }
+
+        const totalCount = await Album.countDocuments(filter);
+        const albums = await Album.find(filter)
             .sort({ createdAt: -1 })
             .skip((page - 1) * PAGE_SIZE)
             .limit(PAGE_SIZE);
