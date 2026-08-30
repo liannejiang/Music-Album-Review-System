@@ -26,6 +26,7 @@ const AlbumForm = () => {
   const [status, setStatus] = useState('idle'); // idle | error | success
   const [message, setMessage] = useState('');
   const [initialLoading, setInitialLoading] = useState(isEditMode);
+  const [fetchError, setFetchError] = useState('');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -45,8 +46,7 @@ const AlbumForm = () => {
         });
         setTracks(album.tracks && album.tracks.length ? toTrackFields(album.tracks) : [{ ...emptyTrack }]);
       } catch (error) {
-        setStatus('error');
-        setMessage(error.response?.data?.message || 'Failed to load album.');
+        setFetchError(error.response?.data?.message || 'Failed to load album.');
       } finally {
         setInitialLoading(false);
       }
@@ -131,6 +131,16 @@ const AlbumForm = () => {
     return (
       <div className="max-w-2xl mx-auto mt-20 mb-20">
         <p className="text-center text-gray-500">Loading album...</p>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="max-w-2xl mx-auto mt-20 mb-20">
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+          {fetchError}
+        </p>
       </div>
     );
   }
