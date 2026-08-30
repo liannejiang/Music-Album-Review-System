@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+
+import { useParams, useNavigate } from 'react-router-dom';
+
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const emptyTrack = { trackNumber: '', title: '', durationSec: '' };
 
@@ -14,6 +17,7 @@ const toTrackFields = (tracks) =>
 
 const AlbumForm = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const isEditMode = Boolean(id);
 
   const [formData, setFormData] = useState({
@@ -27,6 +31,7 @@ const AlbumForm = () => {
   const [message, setMessage] = useState('');
   const [initialLoading, setInitialLoading] = useState(isEditMode);
   const [fetchError, setFetchError] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -127,6 +132,19 @@ const AlbumForm = () => {
     }
   };
 
+  const handleDeleteConfirm = async () => {
+    setDeleteDialogOpen(false);
+    try {
+      await axiosInstance.delete(`/api/admin/albums/${id}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      navigate('/');
+    } catch (error) {
+      setStatus('error');
+      setMessage(error.response?.data?.message || 'Failed to delete album. Please try again.');
+    }
+  };
+
   if (initialLoading) {
     return (
       <div className="max-w-2xl mx-auto mt-20 mb-20">
@@ -147,6 +165,15 @@ const AlbumForm = () => {
 
   return (
     <div className="max-w-2xl mx-auto mt-20 mb-20">
+      {deleteDialogOpen && (
+        <ConfirmDialog
+          message="Delete this album? This action cannot be undone."
+          confirmLabel="Delete"
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteDialogOpen(false)}
+        />
+      )}
+
       <form onSubmit={handleSubmit} className="bg-white p-6 shadow-md rounded">
         <h1 className="text-2xl font-bold mb-4 text-center">
           {isEditMode ? 'Edit Album' : 'Create Album'}
@@ -249,6 +276,22 @@ const AlbumForm = () => {
         >
           {isEditMode ? 'Save Changes' : 'Create Album'}
         </button>
+
+        {/*
+          Delete lives here as a stand-in only because the album detail page
+          (MAR-15) doesn't exist yet. Once it does, this control moves there
+          and is removed from the edit form.
+        */}
+        {isEditMode && (
+          <button
+            type="button"
+            onClick={() => setDeleteDialogOpen(true)}
+            disabled={status === 'success'}
+            className="w-full mt-2 bg-white text-red-600 border border-red-300 p-2 rounded disabled:opacity-50"
+          >
+            Delete Album
+          </button>
+        )}
       </form>
     </div>
   );

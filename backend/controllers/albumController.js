@@ -89,4 +89,24 @@ const updateAlbum = async (req, res) => {
     }
 };
 
-module.exports = { createAlbum, getAlbum, updateAlbum };
+
+const deleteAlbum = async (req, res) => {
+    try {
+        const album = await Album.findById(req.params.id);
+        if (!album) {
+            return res.status(404).json({ message: 'Album not found' });
+        }
+
+        // TODO(MAR-12): cascade reviews
+        await album.deleteOne();
+
+        res.status(200).json({ message: 'Album deleted' });
+    } catch (error) {
+        if (error.name === 'CastError') {
+            return res.status(404).json({ message: 'Album not found' });
+        }
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { createAlbum, getAlbum, updateAlbum, deleteAlbum };
