@@ -1,6 +1,8 @@
 
 const Album = require('../models/Album');
 
+const PAGE_SIZE = 12;
+
 const validateAlbumInput = ({ title, artistName, tracks }) => {
     if (!title || typeof title !== 'string' || !title.trim()) {
         return 'Album title is required';
@@ -12,11 +14,18 @@ const validateAlbumInput = ({ title, artistName, tracks }) => {
         return 'At least one track is required';
     }
     for (const track of tracks) {
-        if (track.trackNumber === undefined || track.trackNumber === null || Number.isNaN(Number(track.trackNumber))) {
-            return 'Each track requires a track number';
+        const trackNumber = Number(track.trackNumber);
+        if (track.trackNumber === undefined || track.trackNumber === null || !Number.isInteger(trackNumber) || trackNumber < 1) {
+            return 'Each track requires a positive integer track number';
         }
         if (!track.title || typeof track.title !== 'string' || !track.title.trim()) {
             return 'Each track requires a title';
+        }
+        if (track.durationSec !== undefined && track.durationSec !== null) {
+            const durationSec = Number(track.durationSec);
+            if (!Number.isInteger(durationSec) || durationSec < 0) {
+                return 'Track duration must be a non-negative integer number of seconds';
+            }
         }
     }
     return null;
@@ -25,6 +34,8 @@ const validateAlbumInput = ({ title, artistName, tracks }) => {
 const createAlbum = async (req, res) => {
     const { title, artistName, releaseYear, coverImageUrl, tracks } = req.body;
 
+    console.log('createAlbum received tracks:', JSON.stringify(tracks));
+
     const validationError = validateAlbumInput({ title, artistName, tracks });
     if (validationError) {
         return res.status(400).json({ message: validationError });
@@ -32,6 +43,7 @@ const createAlbum = async (req, res) => {
 
     try {
         const album = await Album.create({ title, artistName, releaseYear, coverImageUrl, tracks });
+        console.log('createAlbum saved tracks:', JSON.stringify(album.tracks));
         res.status(201).json(album);
     } catch (error) {
         if (error.name === 'ValidationError') {
@@ -59,6 +71,8 @@ const getAlbum = async (req, res) => {
 const updateAlbum = async (req, res) => {
     const { title, artistName, releaseYear, coverImageUrl, tracks } = req.body;
 
+    console.log('updateAlbum received tracks:', JSON.stringify(tracks));
+
     const validationError = validateAlbumInput({ title, artistName, tracks });
     if (validationError) {
         return res.status(400).json({ message: validationError });
@@ -77,6 +91,7 @@ const updateAlbum = async (req, res) => {
         album.tracks = tracks;
 
         const updatedAlbum = await album.save();
+        console.log('updateAlbum saved tracks:', JSON.stringify(updatedAlbum.tracks));
         res.status(200).json(updatedAlbum);
     } catch (error) {
         if (error.name === 'CastError') {
@@ -109,4 +124,25 @@ const deleteAlbum = async (req, res) => {
     }
 };
 
-module.exports = { createAlbum, getAlbum, updateAlbum, deleteAlbum };
+const listAlbums = async (req, res) => {
+    try {
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const totalCount = await Album.countDocuments();
+        const albums = await Album.find()
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * PAGE_SIZE)
+            .limit(PAGE_SIZE);
+
+        res.status(200).json({
+            albums,
+            page,
+            pageSize: PAGE_SIZE,
+            totalCount,
+            totalPages: Math.ceil(totalCount / PAGE_SIZE),
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { createAlbum, getAlbum, updateAlbum, deleteAlbum, listAlbums };
