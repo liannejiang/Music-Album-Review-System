@@ -4,6 +4,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ProtectedRoute from './components/ProtectedRoute';
 import RedirectIfAuthenticated from './components/RedirectIfAuthenticated';
+import RequireAdmin from './components/RequireAdmin';
+import AlbumForm from './pages/AlbumForm';
 import { useAuth } from './context/AuthContext';
 import axiosInstance from './axiosConfig';
 
@@ -47,6 +49,9 @@ function App() {
       <Routes>
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Home />} />
+          <Route element={<RequireAdmin />}>
+            <Route path="/admin/albums/new" element={<AlbumForm />} />
+          </Route>
         </Route>
         <Route element={<RedirectIfAuthenticated />}>
           <Route path="/login" element={<Login />} />
