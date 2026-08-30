@@ -86,4 +86,8 @@ const updateUserProfile = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser, updateUserProfile, getProfile };
+const logoutUser = (req, res) => {
+    res.status(200).json({ message: 'Logged out' });
+};
+
+module.exports = { registerUser, loginUser, logoutUser, updateUserProfile, getProfile };
