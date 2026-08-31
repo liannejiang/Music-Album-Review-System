@@ -13,17 +13,25 @@ const serializeReview = (review, requesterId) => ({
     isOwn: review.userId._id.toString() === requesterId,
 });
 
+const validateReviewInput = ({ stars, comment }) => {
+    if (!Number.isInteger(stars) || stars < 1 || stars > 5) {
+        return 'Rating must be an integer between 1 and 5';
+    }
+    if (comment !== undefined && comment !== null && String(comment).length > 250) {
+        return 'Comment must be at most 250 characters';
+    }
+    return null;
+};
+
 const createReview = async (req, res) => {
     const { albumId, stars, comment } = req.body;
 
     if (!albumId) {
         return res.status(400).json({ message: 'albumId is required' });
     }
-    if (!Number.isInteger(stars) || stars < 1 || stars > 5) {
-        return res.status(400).json({ message: 'Rating must be an integer between 1 and 5' });
-    }
-    if (comment !== undefined && comment !== null && String(comment).length > 250) {
-        return res.status(400).json({ message: 'Comment must be at most 250 characters' });
+    const validationError = validateReviewInput({ stars, comment });
+    if (validationError) {
+        return res.status(400).json({ message: validationError });
     }
 
     try {
@@ -75,4 +83,28 @@ const listReviewsForAlbum = async (req, res) => {
     }
 };
 
-module.exports = { createReview, listReviewsForAlbum };
+const updateReview = async (req, res) => {
+    const { stars, comment } = req.body;
+
+    const validationError = validateReviewInput({ stars, comment });
+    if (validationError) {
+        return res.status(400).json({ message: validationError });
+    }
+
+    try {
+        const review = req.resource;
+        review.stars = stars;
+        review.comment = comment || '';
+        await review.save();
+        await review.populate('userId', 'name');
+
+        res.status(200).json(serializeReview(review, req.user.id));
+    } catch (error) {
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ message: error.message });
+        }
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { createReview, listReviewsForAlbum, updateReview };

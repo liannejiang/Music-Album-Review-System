@@ -2,9 +2,7 @@ import { useState } from 'react';
 
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
-import StarSelector from './StarSelector';
-
-const MAX_COMMENT_LENGTH = 250;
+import ReviewFields, { validateReviewStars } from './ReviewFields';
 
 const ReviewForm = ({ albumId, onCreated }) => {
   const { user } = useAuth();
@@ -17,8 +15,9 @@ const ReviewForm = ({ albumId, onCreated }) => {
     e.preventDefault();
     setError('');
 
-    if (!stars) {
-      setError('Please select a rating.');
+    const validationError = validateReviewStars(stars);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -47,20 +46,13 @@ const ReviewForm = ({ albumId, onCreated }) => {
         </p>
       )}
 
-      <StarSelector value={stars} onChange={setStars} disabled={submitting} />
-
-      <textarea
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        maxLength={MAX_COMMENT_LENGTH}
-        placeholder="Share your thoughts (optional)"
+      <ReviewFields
+        stars={stars}
+        onStarsChange={setStars}
+        comment={comment}
+        onCommentChange={setComment}
         disabled={submitting}
-        className="w-full mt-3 p-2 border rounded resize-none"
-        rows={3}
       />
-      <div className="text-xs text-gray-400 text-right mt-1">
-        {comment.length}/{MAX_COMMENT_LENGTH}
-      </div>
 
       <button
         type="submit"
