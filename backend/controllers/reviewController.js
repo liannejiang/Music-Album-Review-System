@@ -1,6 +1,7 @@
 
 const Review = require('../models/Review');
 const Album = require('../models/Album');
+const { aggregateRating } = require('../utils/aggregateRating');
 
 const serializeReview = (review, requesterId) => ({
     _id: review._id,
@@ -52,8 +53,9 @@ const createReview = async (req, res) => {
             comment: comment || '',
         });
         await review.populate('userId', 'name');
+        const { averageRating, reviewCount } = await aggregateRating(albumId);
 
-        res.status(201).json(serializeReview(review, req.user.id));
+        res.status(201).json({ ...serializeReview(review, req.user.id), averageRating, reviewCount });
     } catch (error) {
         if (error.name === 'CastError') {
             return res.status(404).json({ message: 'Album not found' });
@@ -97,8 +99,9 @@ const updateReview = async (req, res) => {
         review.comment = comment || '';
         await review.save();
         await review.populate('userId', 'name');
+        const { averageRating, reviewCount } = await aggregateRating(review.albumId);
 
-        res.status(200).json(serializeReview(review, req.user.id));
+        res.status(200).json({ ...serializeReview(review, req.user.id), averageRating, reviewCount });
     } catch (error) {
         if (error.name === 'ValidationError') {
             return res.status(400).json({ message: error.message });
@@ -109,8 +112,11 @@ const updateReview = async (req, res) => {
 
 const deleteReview = async (req, res) => {
     try {
+        const { albumId } = req.resource;
         await req.resource.deleteOne();
-        res.status(200).json({ message: 'Review deleted' });
+        const { averageRating, reviewCount } = await aggregateRating(albumId);
+
+        res.status(200).json({ message: 'Review deleted', averageRating, reviewCount });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
