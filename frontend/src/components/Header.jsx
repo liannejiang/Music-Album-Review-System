@@ -24,9 +24,12 @@ const Header = () => {
   return (
     <header className="bg-gray-800 text-white px-4 py-3 flex items-center justify-between">
       <span className="font-bold">MARS</span>
-      <button onClick={handleLogout} className="bg-gray-700 px-3 py-1 rounded text-sm">
-        Logout
-      </button>
+      <div className="flex items-center gap-3">
+        <span className="text-sm">{user.role === 'admin' ? 'Admin' : user.name}</span>
+        <button onClick={handleLogout} className="bg-gray-700 px-3 py-1 rounded text-sm">
+          Logout
+        </button>
+      </div>
     </header>
   );
 };

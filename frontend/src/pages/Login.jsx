@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../axiosConfig';
 
 const Login = () => {
@@ -64,6 +64,10 @@ const Login = () => {
         >
           Login
         </button>
+
+        <p className="mt-4 text-center text-sm text-gray-600">
+          No account yet? <Link to="/register" className="text-blue-600">Register</Link>
+        </p>
       </form>
     </div>
   );

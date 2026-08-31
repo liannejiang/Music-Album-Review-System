@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
+import AddAlbumCard from '../components/AddAlbumCard';
 import AlbumCard from '../components/AlbumCard';
 import EmptyState from '../components/EmptyState';
 import SearchBar from '../components/SearchBar';
@@ -13,6 +14,7 @@ const Catalogue = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [query, setQuery] = useState('');
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     const loadAlbums = async () => {
@@ -63,9 +65,10 @@ const Catalogue = () => {
         />
       )}
 
-      {status === 'loaded' && albums.length > 0 && (
+      {status === 'loaded' && (albums.length > 0 || (isAdmin && !query)) && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {isAdmin && <AddAlbumCard />}
             {albums.map((album) => (
               <AlbumCard key={album._id} album={album} />
             ))}
