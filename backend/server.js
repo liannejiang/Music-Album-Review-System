@@ -13,6 +13,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api', require('./routes/albumRoutes'));
+app.use('/api', require('./routes/reviewRoutes'));
 
 // Export the app object for testing
 if (require.main === module) {
