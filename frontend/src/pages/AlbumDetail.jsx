@@ -96,6 +96,9 @@ const AlbumDetail = () => {
   if (status === 'loading') {
     return (
       <div className="max-w-2xl mx-auto mt-20 mb-20">
+        <Link to="/" className="text-sm text-blue-600 mb-4 inline-block">
+          ← Back to catalogue
+        </Link>
         <p className="text-center text-gray-500">Loading album...</p>
       </div>
     );
@@ -104,6 +107,9 @@ const AlbumDetail = () => {
   if (status === 'error') {
     return (
       <div className="max-w-2xl mx-auto mt-20 mb-20">
+        <Link to="/" className="text-sm text-blue-600 mb-4 inline-block">
+          ← Back to catalogue
+        </Link>
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
           {message}
         </p>
@@ -113,6 +119,10 @@ const AlbumDetail = () => {
 
   return (
     <div className="max-w-2xl mx-auto mt-10 mb-20 px-4">
+      <Link to="/" className="text-sm text-blue-600 mb-4 inline-block">
+        ← Back to catalogue
+      </Link>
+
       {deleteDialogOpen && (
         <ConfirmDialog
           message="Delete this album? This action cannot be undone."
