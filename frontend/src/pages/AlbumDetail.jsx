@@ -4,6 +4,9 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
 import ConfirmDialog from '../components/ConfirmDialog';
+import EmptyState from '../components/EmptyState';
+import ReviewCard from '../components/ReviewCard';
+import ReviewForm from '../components/ReviewForm';
 
 const formatDuration = (durationSec) => {
   if (durationSec === undefined || durationSec === null) return '--:--';
@@ -23,6 +26,9 @@ const AlbumDetail = () => {
   const [album, setAlbum] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [reviews, setReviews] = useState([]);
+  const [reviewsStatus, setReviewsStatus] = useState('loading'); // loading | error | loaded
+  const [reviewsMessage, setReviewsMessage] = useState('');
 
   useEffect(() => {
     const loadAlbum = async () => {
@@ -41,6 +47,28 @@ const AlbumDetail = () => {
 
     loadAlbum();
   }, [id, user.token]);
+
+  useEffect(() => {
+    const loadReviews = async () => {
+      setReviewsStatus('loading');
+      try {
+        const response = await axiosInstance.get(`/api/albums/${id}/reviews`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        setReviews(response.data);
+        setReviewsStatus('loaded');
+      } catch (error) {
+        setReviewsStatus('error');
+        setReviewsMessage(error.response?.data?.message || 'Failed to load reviews.');
+      }
+    };
+
+    loadReviews();
+  }, [id, user.token]);
+
+  const handleReviewCreated = (review) => {
+    setReviews((prev) => [review, ...prev]);
+  };
 
   const handleDeleteConfirm = async () => {
     setDeleteDialogOpen(false);
@@ -135,9 +163,37 @@ const AlbumDetail = () => {
           ))}
         </ol>
 
-        {/*
-          MAR-16: review list and review form go here, below the track list.
-        */}
+        <h2 className="font-semibold mt-6 mb-2">Reviews</h2>
+
+        {reviewsStatus === 'loading' && <p className="text-sm text-gray-500">Loading reviews...</p>}
+
+        {reviewsStatus === 'error' && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+            {reviewsMessage}
+          </p>
+        )}
+
+        {reviewsStatus === 'loaded' && !isAdmin && (
+          reviews.some((review) => review.isOwn) ? (
+            <p className="text-sm text-gray-500 mb-4">
+              You've already reviewed this album. Editing is coming in a later iteration.
+            </p>
+          ) : (
+            <ReviewForm albumId={id} onCreated={handleReviewCreated} />
+          )
+        )}
+
+        {reviewsStatus === 'loaded' && reviews.length === 0 && (
+          <EmptyState message="No reviews yet." />
+        )}
+
+        {reviewsStatus === 'loaded' && reviews.length > 0 && (
+          <div className="divide-y">
+            {reviews.map((review) => (
+              <ReviewCard key={review._id} review={review} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
