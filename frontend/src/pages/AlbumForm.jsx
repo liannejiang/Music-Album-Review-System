@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const emptyTrack = { title: '', durationMinutes: '', durationSeconds: '' };
 const emptyFormData = { title: '', artistName: '', releaseYear: '', coverImageUrl: '' };
@@ -21,16 +22,28 @@ const toTrackFields = (tracks) =>
 
 const AlbumForm = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const isEditMode = Boolean(id);
 
   const [formData, setFormData] = useState({ ...emptyFormData });
   const [tracks, setTracks] = useState([{ ...emptyTrack }]);
+  const [baseline, setBaseline] = useState({ formData: emptyFormData, tracks: [{ ...emptyTrack }] });
   const [status, setStatus] = useState('idle'); // idle | error | success
   const [message, setMessage] = useState('');
   const [initialLoading, setInitialLoading] = useState(isEditMode);
   const [fetchError, setFetchError] = useState('');
   const [createdAlbumId, setCreatedAlbumId] = useState(null);
+  const [backConfirmOpen, setBackConfirmOpen] = useState(false);
   const { user } = useAuth();
+
+  const isDirty = JSON.stringify({ formData, tracks }) !== JSON.stringify(baseline);
+
+  const handleBackClick = (e) => {
+    if (isDirty) {
+      e.preventDefault();
+      setBackConfirmOpen(true);
+    }
+  };
 
   useEffect(() => {
     if (!isEditMode) return;
@@ -41,13 +54,16 @@ const AlbumForm = () => {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         const album = response.data;
-        setFormData({
+        const loadedFormData = {
           title: album.title || '',
           artistName: album.artistName || '',
           releaseYear: album.releaseYear !== undefined && album.releaseYear !== null ? String(album.releaseYear) : '',
           coverImageUrl: album.coverImageUrl || '',
-        });
-        setTracks(album.tracks && album.tracks.length ? toTrackFields(album.tracks) : [{ ...emptyTrack }]);
+        };
+        const loadedTracks = album.tracks && album.tracks.length ? toTrackFields(album.tracks) : [{ ...emptyTrack }];
+        setFormData(loadedFormData);
+        setTracks(loadedTracks);
+        setBaseline({ formData: loadedFormData, tracks: loadedTracks });
       } catch (error) {
         setFetchError(error.response?.data?.message || 'Failed to load album.');
       } finally {
@@ -127,11 +143,13 @@ const AlbumForm = () => {
     try {
       if (isEditMode) {
         await axiosInstance.put(`/api/admin/albums/${id}`, payload, authHeader);
+        setBaseline({ formData, tracks });
         setStatus('success');
         setMessage('Album updated successfully.');
       } else {
         const response = await axiosInstance.post('/api/admin/albums', payload, authHeader);
         setCreatedAlbumId(response.data._id);
+        setBaseline({ formData, tracks });
         setStatus('success');
         setMessage('Album created successfully.');
       }
@@ -147,6 +165,7 @@ const AlbumForm = () => {
   const handleAddAnother = () => {
     setFormData({ ...emptyFormData });
     setTracks([{ ...emptyTrack }]);
+    setBaseline({ formData: emptyFormData, tracks: [{ ...emptyTrack }] });
     setStatus('idle');
     setMessage('');
     setCreatedAlbumId(null);
@@ -155,6 +174,9 @@ const AlbumForm = () => {
   if (initialLoading) {
     return (
       <div className="max-w-2xl mx-auto mt-20 mb-20">
+        <Link to="/" className="text-sm text-blue-600 mb-4 inline-block">
+          ← Back to catalogue
+        </Link>
         <p className="text-center text-gray-500">Loading album...</p>
       </div>
     );
@@ -163,6 +185,9 @@ const AlbumForm = () => {
   if (fetchError) {
     return (
       <div className="max-w-2xl mx-auto mt-20 mb-20">
+        <Link to="/" className="text-sm text-blue-600 mb-4 inline-block">
+          ← Back to catalogue
+        </Link>
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
           {fetchError}
         </p>
@@ -172,6 +197,19 @@ const AlbumForm = () => {
 
   return (
     <div className="max-w-2xl mx-auto mt-20 mb-20">
+      <Link to="/" onClick={handleBackClick} className="text-sm text-blue-600 mb-4 inline-block">
+        ← Back to catalogue
+      </Link>
+
+      {backConfirmOpen && (
+        <ConfirmDialog
+          message="You have unsaved changes. Discard them and return to the catalogue?"
+          confirmLabel="Discard"
+          onConfirm={() => navigate('/')}
+          onCancel={() => setBackConfirmOpen(false)}
+        />
+      )}
+
       <form onSubmit={handleSubmit} className="bg-white p-6 shadow-md rounded">
         <h1 className="text-2xl font-bold mb-4 text-center">
           {isEditMode ? 'Edit Album' : 'Create Album'}
