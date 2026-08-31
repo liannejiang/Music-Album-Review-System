@@ -107,4 +107,13 @@ const updateReview = async (req, res) => {
     }
 };
 
-module.exports = { createReview, listReviewsForAlbum, updateReview };
+const deleteReview = async (req, res) => {
+    try {
+        await req.resource.deleteOne();
+        res.status(200).json({ message: 'Review deleted' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { createReview, listReviewsForAlbum, updateReview, deleteReview };

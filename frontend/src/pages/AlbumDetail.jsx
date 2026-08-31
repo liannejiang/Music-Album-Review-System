@@ -74,6 +74,10 @@ const AlbumDetail = () => {
     setReviews((prev) => prev.map((review) => (review._id === updatedReview._id ? updatedReview : review)));
   };
 
+  const handleReviewDeleted = (reviewId) => {
+    setReviews((prev) => prev.filter((review) => review._id !== reviewId));
+  };
+
   const handleDeleteConfirm = async () => {
     setDeleteDialogOpen(false);
     try {
@@ -188,7 +192,12 @@ const AlbumDetail = () => {
         {reviewsStatus === 'loaded' && reviews.length > 0 && (
           <div className="divide-y">
             {reviews.map((review) => (
-              <ReviewCard key={review._id} review={review} onUpdated={handleReviewUpdated} />
+              <ReviewCard
+                key={review._id}
+                review={review}
+                onUpdated={handleReviewUpdated}
+                onDeleted={handleReviewDeleted}
+              />
             ))}
           </div>
         )}
