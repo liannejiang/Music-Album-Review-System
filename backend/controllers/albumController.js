@@ -117,7 +117,7 @@ const deleteAlbum = async (req, res) => {
             return res.status(404).json({ message: 'Album not found' });
         }
 
-        // TODO(MAR-12): cascade reviews
+        await Review.deleteMany({ albumId: album._id });
         await album.deleteOne();
 
         res.status(200).json({ message: 'Album deleted' });
