@@ -2,15 +2,18 @@ import { useState } from 'react';
 
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
+import ConfirmDialog from './ConfirmDialog';
 import ReviewFields, { validateReviewStars } from './ReviewFields';
 
-const ReviewCard = ({ review, onUpdated }) => {
+const ReviewCard = ({ review, onUpdated, onDeleted }) => {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [stars, setStars] = useState(review.stars);
   const [comment, setComment] = useState(review.comment);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const startEditing = () => {
     setStars(review.stars);
@@ -47,6 +50,21 @@ const ReviewCard = ({ review, onUpdated }) => {
       setError(err.response?.data?.message || 'Failed to save review. Please try again.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    setDeleteDialogOpen(false);
+    setError('');
+    setDeleting(true);
+    try {
+      await axiosInstance.delete(`/api/reviews/${review._id}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      onDeleted(review._id);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete review. Please try again.');
+      setDeleting(false);
     }
   };
 
@@ -90,6 +108,21 @@ const ReviewCard = ({ review, onUpdated }) => {
 
   return (
     <div className="py-3">
+      {deleteDialogOpen && (
+        <ConfirmDialog
+          message="Delete this review? This action cannot be undone."
+          confirmLabel="Delete"
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteDialogOpen(false)}
+        />
+      )}
+
+      {error && (
+        <p className="mb-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+          {error}
+        </p>
+      )}
+
       <div className="flex items-center justify-between">
         <span className="font-semibold">{review.userName}</span>
         <span className="text-yellow-400" aria-label={`${review.stars} out of 5 stars`}>
@@ -101,9 +134,24 @@ const ReviewCard = ({ review, onUpdated }) => {
       <div className="flex items-center justify-between mt-1">
         <p className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</p>
         {review.isOwn && (
-          <button type="button" onClick={startEditing} className="text-xs text-blue-600">
-            Edit
-          </button>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={startEditing}
+              disabled={deleting}
+              className="text-xs text-blue-600 disabled:opacity-50"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeleteDialogOpen(true)}
+              disabled={deleting}
+              className="text-xs text-red-600 disabled:opacity-50"
+            >
+              Delete
+            </button>
+          </div>
         )}
       </div>
     </div>
