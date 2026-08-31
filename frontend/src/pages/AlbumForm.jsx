@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
 
 const emptyTrack = { title: '', durationMinutes: '', durationSeconds: '' };
+const emptyFormData = { title: '', artistName: '', releaseYear: '', coverImageUrl: '' };
 
 const toTrackFields = (tracks) =>
   tracks.map((track) => {
@@ -22,17 +23,13 @@ const AlbumForm = () => {
   const { id } = useParams();
   const isEditMode = Boolean(id);
 
-  const [formData, setFormData] = useState({
-    title: '',
-    artistName: '',
-    releaseYear: '',
-    coverImageUrl: '',
-  });
+  const [formData, setFormData] = useState({ ...emptyFormData });
   const [tracks, setTracks] = useState([{ ...emptyTrack }]);
   const [status, setStatus] = useState('idle'); // idle | error | success
   const [message, setMessage] = useState('');
   const [initialLoading, setInitialLoading] = useState(isEditMode);
   const [fetchError, setFetchError] = useState('');
+  const [createdAlbumId, setCreatedAlbumId] = useState(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -133,7 +130,8 @@ const AlbumForm = () => {
         setStatus('success');
         setMessage('Album updated successfully.');
       } else {
-        await axiosInstance.post('/api/admin/albums', payload, authHeader);
+        const response = await axiosInstance.post('/api/admin/albums', payload, authHeader);
+        setCreatedAlbumId(response.data._id);
         setStatus('success');
         setMessage('Album created successfully.');
       }
@@ -144,6 +142,14 @@ const AlbumForm = () => {
           (isEditMode ? 'Failed to update album. Please try again.' : 'Failed to create album. Please try again.')
       );
     }
+  };
+
+  const handleAddAnother = () => {
+    setFormData({ ...emptyFormData });
+    setTracks([{ ...emptyTrack }]);
+    setStatus('idle');
+    setMessage('');
+    setCreatedAlbumId(null);
   };
 
   if (initialLoading) {
@@ -180,6 +186,23 @@ const AlbumForm = () => {
           <p className="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded p-2">
             {message}
           </p>
+        )}
+        {status === 'success' && !isEditMode && (
+          <div className="flex gap-2 mb-4">
+            <Link
+              to={`/albums/${createdAlbumId}`}
+              className="flex-1 text-center bg-blue-600 text-white p-2 rounded"
+            >
+              View album
+            </Link>
+            <button
+              type="button"
+              onClick={handleAddAnother}
+              className="flex-1 bg-white text-gray-700 border border-gray-300 p-2 rounded"
+            >
+              Add another
+            </button>
+          </div>
         )}
 
         <input
