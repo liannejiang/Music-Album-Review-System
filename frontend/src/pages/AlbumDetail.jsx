@@ -70,6 +70,10 @@ const AlbumDetail = () => {
     setReviews((prev) => [review, ...prev]);
   };
 
+  const handleReviewUpdated = (updatedReview) => {
+    setReviews((prev) => prev.map((review) => (review._id === updatedReview._id ? updatedReview : review)));
+  };
+
   const handleDeleteConfirm = async () => {
     setDeleteDialogOpen(false);
     try {
@@ -173,14 +177,8 @@ const AlbumDetail = () => {
           </p>
         )}
 
-        {reviewsStatus === 'loaded' && !isAdmin && (
-          reviews.some((review) => review.isOwn) ? (
-            <p className="text-sm text-gray-500 mb-4">
-              You've already reviewed this album. Editing is coming in a later iteration.
-            </p>
-          ) : (
-            <ReviewForm albumId={id} onCreated={handleReviewCreated} />
-          )
+        {reviewsStatus === 'loaded' && !isAdmin && !reviews.some((review) => review.isOwn) && (
+          <ReviewForm albumId={id} onCreated={handleReviewCreated} />
         )}
 
         {reviewsStatus === 'loaded' && reviews.length === 0 && (
@@ -190,7 +188,7 @@ const AlbumDetail = () => {
         {reviewsStatus === 'loaded' && reviews.length > 0 && (
           <div className="divide-y">
             {reviews.map((review) => (
-              <ReviewCard key={review._id} review={review} />
+              <ReviewCard key={review._id} review={review} onUpdated={handleReviewUpdated} />
             ))}
           </div>
         )}
