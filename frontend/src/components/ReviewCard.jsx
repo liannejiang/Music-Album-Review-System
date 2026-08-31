@@ -58,10 +58,10 @@ const ReviewCard = ({ review, onUpdated, onDeleted }) => {
     setError('');
     setDeleting(true);
     try {
-      await axiosInstance.delete(`/api/reviews/${review._id}`, {
+      const response = await axiosInstance.delete(`/api/reviews/${review._id}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      onDeleted(review._id);
+      onDeleted(review._id, response.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete review. Please try again.');
       setDeleting(false);

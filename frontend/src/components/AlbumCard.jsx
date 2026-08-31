@@ -12,7 +12,11 @@ const AlbumCard = ({ album }) => (
     <div className="p-3">
       <h3 className="font-semibold truncate">{album.title}</h3>
       <p className="text-sm text-gray-600 truncate">{album.artistName}</p>
-      <p className="text-sm text-gray-400 mt-1">No ratings yet</p>
+      <p className="text-sm text-gray-400 mt-1">
+        {album.averageRating != null
+          ? `★ ${album.averageRating.toFixed(1)} (${album.reviewCount})`
+          : 'No ratings yet'}
+      </p>
     </div>
   </Link>
 );

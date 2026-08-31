@@ -66,16 +66,19 @@ const AlbumDetail = () => {
     loadReviews();
   }, [id, user.token]);
 
-  const handleReviewCreated = (review) => {
+  const handleReviewCreated = ({ averageRating, reviewCount, ...review }) => {
     setReviews((prev) => [review, ...prev]);
+    setAlbum((prev) => ({ ...prev, averageRating, reviewCount }));
   };
 
-  const handleReviewUpdated = (updatedReview) => {
+  const handleReviewUpdated = ({ averageRating, reviewCount, ...updatedReview }) => {
     setReviews((prev) => prev.map((review) => (review._id === updatedReview._id ? updatedReview : review)));
+    setAlbum((prev) => ({ ...prev, averageRating, reviewCount }));
   };
 
-  const handleReviewDeleted = (reviewId) => {
+  const handleReviewDeleted = (reviewId, { averageRating, reviewCount }) => {
     setReviews((prev) => prev.filter((review) => review._id !== reviewId));
+    setAlbum((prev) => ({ ...prev, averageRating, reviewCount }));
   };
 
   const handleDeleteConfirm = async () => {
@@ -138,7 +141,11 @@ const AlbumDetail = () => {
             <h1 className="text-2xl font-bold">{album.title}</h1>
             <p className="text-gray-600">{album.artistName}</p>
             {album.releaseYear && <p className="text-sm text-gray-400">{album.releaseYear}</p>}
-            <p className="text-sm text-gray-400 mt-2">No ratings yet</p>
+            <p className="text-sm text-gray-400 mt-2">
+              {album.averageRating != null
+                ? `★ ${album.averageRating.toFixed(1)} (${album.reviewCount} review${album.reviewCount === 1 ? '' : 's'})`
+                : 'No ratings yet'}
+            </p>
           </div>
         </div>
 

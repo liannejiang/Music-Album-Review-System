@@ -1,5 +1,7 @@
 
 const Album = require('../models/Album');
+const Review = require('../models/Review');
+const { aggregateRating, roundToOneDecimal } = require('../utils/aggregateRating');
 
 const PAGE_SIZE = 12;
 
@@ -61,7 +63,8 @@ const getAlbum = async (req, res) => {
         if (!album) {
             return res.status(404).json({ message: 'Album not found' });
         }
-        res.status(200).json(album);
+        const { averageRating, reviewCount } = await aggregateRating(album._id);
+        res.status(200).json({ ...album.toObject(), averageRating, reviewCount });
     } catch (error) {
         if (error.name === 'CastError') {
             return res.status(404).json({ message: 'Album not found' });
@@ -149,8 +152,23 @@ const listAlbums = async (req, res) => {
             .skip((page - 1) * PAGE_SIZE)
             .limit(PAGE_SIZE);
 
+        const ratingsByAlbum = await Review.aggregate([
+            { $match: { albumId: { $in: albums.map((album) => album._id) } } },
+            { $group: { _id: '$albumId', sum: { $sum: '$stars' }, reviewCount: { $sum: 1 } } },
+        ]);
+        const ratingsByAlbumId = new Map(ratingsByAlbum.map((entry) => [entry._id.toString(), entry]));
+
+        const albumsWithRatings = albums.map((album) => {
+            const rating = ratingsByAlbumId.get(album._id.toString());
+            return {
+                ...album.toObject(),
+                averageRating: rating ? roundToOneDecimal(rating.sum / rating.reviewCount) : null,
+                reviewCount: rating ? rating.reviewCount : 0,
+            };
+        });
+
         res.status(200).json({
-            albums,
+            albums: albumsWithRatings,
             page,
             pageSize: PAGE_SIZE,
             totalCount,
