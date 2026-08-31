@@ -25,12 +25,7 @@ const Header = () => {
     <header className="bg-gray-800 text-white px-4 py-3 flex items-center justify-between">
       <span className="font-bold">MARS</span>
       <div className="flex items-center gap-3">
-        <span className="text-sm">
-          {user.name}
-          {user.role === 'admin' && (
-            <span className="ml-2 px-2 py-0.5 bg-blue-600 text-xs rounded">Admin</span>
-          )}
-        </span>
+        <span className="text-sm">{user.role === 'admin' ? 'Admin' : user.name}</span>
         <button onClick={handleLogout} className="bg-gray-700 px-3 py-1 rounded text-sm">
           Logout
         </button>
