@@ -1,12 +1,12 @@
 ## Music Album Review System
 
-IFN636 Assessment 1 — Software Requirements Analysis and Design
+IFN636 Assessment 1 — Software Life Cycle and Management
 
-A web application allowing members to browse albums and submit ratings/reviews,
+A web application allowing user to browse albums and submit ratings/reviews,
 with admin moderation. Built with React, Node.js/Express, and MongoDB Atlas.
 
 ### Roles
-- Admin: manage album catalogue, moderate reviews
+- Admin: manage album catalogue
 - Member: browse albums, submit and manage own reviews
 
 ### Architecture
@@ -143,3 +143,6 @@ meant to be documented here in plain text, unlike `MONGO_URI` or
 
 Each has `role: 'user'`. One album (*In Rainbows*) is deliberately left
 without any reviews, to demonstrate the "No ratings yet" state.
+
+**Album cover**
+Non-copyright album covers are from Unsplash.com 
