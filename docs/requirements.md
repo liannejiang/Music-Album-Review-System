@@ -1,12 +1,9 @@
 # MARS — Music Album Review System
 
-Requirements specification for implementation. This file is the single source of
-truth for Claude Code. If an instruction in a chat conflicts with this file, ask
-before proceeding.
-
 Student: Lei-An Jiang (n12656631)
 Unit: IFN636 Software Life Cycle Management, Assessment 1
-Base: QUT Task Manager MERN template
+
+> This file consolidates the requirements from the assessment report (Section 1.2) and the acceptance criteria from the Jira backlog into a single reference used during implementation. This is a working document instead of a separate specification, the report is authoritative.
 
 ---
 
